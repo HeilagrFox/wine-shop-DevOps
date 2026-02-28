@@ -3,7 +3,6 @@ WORKDIR /app
 
 # Копируем только package файлы
 COPY package*.json ./
-COPY .env ./
 
 
 RUN npm ci --include=optional
