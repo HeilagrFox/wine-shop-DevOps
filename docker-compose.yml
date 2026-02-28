@@ -41,7 +41,7 @@ services:
     restart: unless-stopped
 
   frontend:
-    build: ./frontend
+    image: wines_frontend
     container_name: wines_frontend
     ports:
       - "80:80"

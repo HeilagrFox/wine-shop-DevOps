@@ -1,13 +1,12 @@
-FROM node:20-alpine AS build
+FROM node:20-slim AS build
 WORKDIR /app
 
 # Копируем только package файлы
 COPY package*.json ./
+COPY .env ./
 
-# Очищаем кэш и устанавливаем зависимости с указанием платформы
-RUN rm -rf node_modules package-lock.json && \
-    npm cache clean --force && \
-    npm install --platform=linux --arch=x64
+
+RUN npm ci --include=optional
 
 # Копируем остальные файлы
 COPY . .
