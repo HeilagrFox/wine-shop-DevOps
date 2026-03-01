@@ -62,7 +62,6 @@ export const addWineToCart = async (
 ): Promise<AddWineToCartResponse> => {
   await api.post<void>(`/cart/wines/${wineId}`);
 
-  console.log("addWineToCart", wineId);
 
   return;
 };
