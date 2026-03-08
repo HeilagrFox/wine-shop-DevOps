@@ -4,18 +4,29 @@ terraform {
       source  = "yandex-cloud/yandex"
     }
   }
+  backend "s3" {
+    endpoints = {
+      s3 = "https://storage.yandexcloud.net"
+    }
+    bucket = "devops-olya"
+    region = "ru-central1"
+    key    = "terraform/terraform.tfstate"
+    skip_region_validation      = true
+    skip_credentials_validation = true
+    skip_requesting_account_id  = true # необходимая опция при описании бэкенда для Terraform версии 1.6.1 и старше.
+    skip_s3_checksum            = true # необходимая опция при описании бэкенда для Terraform версии 1.6.3 и старше.
+
+  }
 }
 
 variable "yc_cloud_id" {}
 variable "yc_folder_id" {}
-variable "yc_sa_key" {}
 variable "ssh_public_key_content" {}
 
 provider "yandex" {
   cloud_id  = var.yc_cloud_id
   folder_id = var.yc_folder_id
   zone      = "ru-central1-b"
-  service_account_key_file = var.yc_sa_key
 }
 
 resource "yandex_vpc_network" "default" {
@@ -78,6 +89,7 @@ resource "yandex_compute_instance" "vm" {
   metadata = {
     ssh-keys = "ubuntu:${var.ssh_public_key_content}"
     user-data = <<-EOF
+      #cloud-config
       package_update: true
       packages:
         - apt-transport-https
