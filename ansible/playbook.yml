@@ -1,0 +1,74 @@
+- name: Install Docker on Ubuntu/CentOS
+  hosts: all
+  become: true 
+  vars:
+    docker_edition: 'ce' 
+    docker_package: "docker-{{ docker_edition }}"
+    docker_service_state: started
+    docker_service_enabled: true
+  tasks:
+      - name: Check if Docker is already installed
+        command: docker --version
+        register: docker_check_result
+        changed_when: false
+        failed_when: false
+        when: ansible_os_family == "Debian"
+      - name: Install Docker (if not present)
+        block:
+          - name: Update apt cache (for Debian/Ubuntu)
+            apt:
+              update_cache: yes
+              cache_valid_time: 3600
+
+          - name: Install prerequisites (Debian/Ubuntu)
+            apt:
+              name:
+                - apt-transport-https
+                - ca-certificates
+                - curl
+                - gnupg
+                - lsb-release
+              state: present
+
+          - name: Add Docker GPG key (Debian/Ubuntu)
+            apt_key:
+              url: https://download.docker.com/linux/ubuntu/gpg
+              state: present
+            ignore_errors: yes 
+
+          - name: Add Docker repository (Debian/Ubuntu)
+            apt_repository:
+              repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+              state: present
+              filename: docker
+
+          - name: Install Docker Engine (Debian/Ubuntu)
+            apt:
+              name:
+                - docker-ce
+                - docker-ce-cli
+                - containerd.io
+              state: present
+              update_cache: yes
+            register: docker_install_result
+
+          - name: Add ubuntu user to docker group
+            user:
+              name: ubuntu
+              groups: docker
+              append: yes
+
+          - name: Ensure Docker service is started
+            systemd:
+              name: docker
+              state: started
+              enabled: true
+
+          - name: Check Docker service status
+            command: service docker status
+            register: docker_status_check
+            changed_when: false  
+            failed_when: false   
+        when: 
+          - ansible_os_family == "Debian"
+          - docker_check_result.rc != 0

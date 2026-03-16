@@ -1,0 +1,58 @@
+name: Yandex Cloud Terraform
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Действие (plan / apply / destroy)'
+        required: true
+        default: 'plan'
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./terraform
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
+
+      - name: Write SA Key to File
+        run: |
+          cat > /tmp/yc_sa_key.json << EOF
+          ${{ secrets.YC_SA_KEY }}
+          EOF
+
+      - name: Terraform Init
+        run: |
+          terraform init \
+            -backend-config="access_key=${{ secrets.YC_ACCESS_KEY }}" \
+            -backend-config="secret_key=${{ secrets.YC_SECRET_KEY }}"
+
+      - name: Terraform Plan
+        if: github.event.inputs.action == 'plan'
+        run: terraform plan -var="yc_cloud_id=${{ secrets.YC_CLOUD_ID }}" -var="yc_folder_id=${{ secrets.YC_FOLDER_ID }}" -var="ssh_public_key_content=${{ secrets.SSH_PUBLIC_KEY_CONTENT }}" 
+        env:
+          YC_SERVICE_ACCOUNT_KEY_FILE: /tmp/yc_sa_key.json 
+
+      - name: Terraform Apply
+        if: github.event.inputs.action == 'apply'
+        run: terraform apply -auto-approve -var="yc_cloud_id=${{ secrets.YC_CLOUD_ID }}" -var="yc_folder_id=${{ secrets.YC_FOLDER_ID }}" -var="ssh_public_key_content=${{ secrets.SSH_PUBLIC_KEY_CONTENT }}"
+        env:
+          YC_SERVICE_ACCOUNT_KEY_FILE: /tmp/yc_sa_key.json 
+
+      - name: Terraform Destroy
+        if: github.event.inputs.action == 'destroy'
+        run: terraform destroy -auto-approve -var="yc_cloud_id=${{ secrets.YC_CLOUD_ID }}" -var="yc_folder_id=${{ secrets.YC_FOLDER_ID }}" -var="ssh_public_key_content=${{ secrets.SSH_PUBLIC_KEY_CONTENT }}"
+        env:
+          YC_SERVICE_ACCOUNT_KEY_FILE: /tmp/yc_sa_key.json 
+      
