@@ -1,0 +1,46 @@
+name: Deploy with Ansible
+
+on:
+  workflow_dispatch:  
+    inputs:
+      target_ip:
+        description: 'Target server IP address'
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./ansible
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up SSH key
+        uses: webfactory/ssh-agent@v0.9.0 
+        with:
+          ssh-private-key: ${{ secrets.ANSIBLE_SSH_KEY }}
+
+      - name: Add server to known_hosts
+        run: |
+          ssh-keyscan -H ${{ inputs.target_ip }} >> ~/.ssh/known_hosts
+
+      - name: Generate inventory.yml from template
+        run: |
+          sed "s|{{ IP_ADDRESS }}|${{ inputs.target_ip }}|g" inventory.yml.template > inventory.yml
+          cat inventory.yml  # для отладки
+
+      - name: Install Ansible
+        run: pip install ansible
+
+      - name: Run Ansible playbook
+        run: |
+          ansible-playbook \
+            -i inventory.yml \
+            playbook.yml \
+            --extra-vars "ansible_host=${{ inputs.target_ip }}"
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: False 
