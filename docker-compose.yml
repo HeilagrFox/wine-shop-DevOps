@@ -43,6 +43,8 @@ services:
   frontend:
     image: wines_frontend
     container_name: wines_frontend
+    environment:
+      - BACKEND_HOST=http://backend:8000
     ports:
       - "80:80"
     depends_on:
