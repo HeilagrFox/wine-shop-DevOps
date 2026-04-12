@@ -213,3 +213,6 @@ qdrant_storage
 #terraform
 terraform/*
 !terraform/*.tf
+
+#kuber
+secret.yaml

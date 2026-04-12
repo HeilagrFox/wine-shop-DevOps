@@ -5,6 +5,7 @@ on:
     branches: [ "main", "master" ]
   pull_request:
     branches: [ "main", "master" ]
+  workflow_dispatch:
 env:
   REGISTRY: ghcr.io
   GITHUB_OWNER_RAW: ${{ github.repository_owner }}

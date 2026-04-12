@@ -3,7 +3,7 @@ from locust import HttpUser, task, constant
 
 class WineSearchUser(HttpUser):
     # Target из конфига (ssl: false => http://)
-    host = "http://62.84.126.52:8000"
+    host = "http://111.88.242.185:80/backend"
 
     # Pandora: ops=100, instances=50 => 100 RPS / 50 юзеров = 2 запроса/сек на одного юзера
     # Пауза между запросами = 0.5 сек. (Locust меряет нагрузку пользователями, а не RPS)

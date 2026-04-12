@@ -1,0 +1,76 @@
+namespaceOverride: wines-rag
+
+prometheus:
+  prometheusSpec:
+    additionalServiceMonitors:
+      - name: backend-monitor
+        namespace: wines-rag
+        selector:
+          matchLabels:
+            app: backend
+        namespaceSelector:
+          matchNames:
+            - wines-rag
+        endpoints:
+          - port: http
+            path: /metrics
+            interval: 30s
+    retention: 15d
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: yc-network-hdd  
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 15Gi
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: 2000m
+        memory: 4Gi
+    podMonitorSelectorNilUsesHelmValues: false
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorNamespaceSelector: {}
+    serviceMonitorNamespaceSelector: {}
+
+
+grafana:
+  adminPassword: "GrafanaStrongPass123!" 
+  persistence:
+    enabled: true
+    storageClassName: yc-network-hdd
+    size: 10Gi
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+  sidecar:
+    dashboards:
+      enabled: true
+      searchNamespace: ALL
+    datasources:
+      enabled: true
+
+
+kubeStateMetrics:
+  enabled: true
+nodeExporter:
+  enabled: true
+  hostRootFsMount:
+    enabled: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+alertmanager:
+  enabled: false
