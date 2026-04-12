@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: qdrant-loader
+  namespace: wines-rag
+spec:
+  backoffLimit: 3  
+  template:
+    spec:
+      restartPolicy: Never 
+      initContainers:
+      - name: wait-for-qdrant
+        image: curlimages/curl:latest
+        command: ['sh', '-c', 'until curl -sf http://qdrant:6333/readyz; do echo "⏳ Waiting for Qdrant..."; sleep 5; done; echo "✅ Qdrant is ready"']
+      containers:
+      - name: qdrant-loader
+        image: ghcr.io/heilagrfox/wine-shop-devops/qdrant-loader:latest
+        env:
+        - name: QDRANT__URL
+          value: "http://qdrant:6333"
+        envFrom:
+        - secretRef:
+            name: app-secrets
+        resources:
+          requests:
+            cpu: 200m
+            memory: 256Mi
+          limits:
+            cpu: 1000m
+            memory: 1024Mi
+      imagePullSecrets:       
+      - name: ghcr-secret

@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qdrant
+  namespace: wines-rag
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate  
+  selector:
+    matchLabels:
+      app: qdrant
+  template:
+    metadata:
+      labels:
+        app: qdrant
+    spec:
+      containers:
+      - name: qdrant
+        image: qdrant/qdrant:latest
+        ports:
+        - containerPort: 6333
+          name: http
+        - containerPort: 6334
+          name: grpc
+        envFrom:
+        - secretRef:
+            name: app-secrets
+        volumeMounts:
+        - name: qdrant-storage
+          mountPath: /qdrant/storage
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1024Mi
+          limits:
+            cpu: 2000m
+            memory: 4096Mi
+        livenessProbe:
+          httpGet:
+            path: /readyz
+            port: 6333
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 6333
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: qdrant-storage
+        persistentVolumeClaim:
+          claimName: qdrant-pvc  
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: qdrant-pvc
+  namespace: wines-rag
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi 
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qdrant
+  namespace: wines-rag
+spec:
+  selector:
+    app: qdrant
+  ports:
+  - name: http
+    port: 6333
+    targetPort: 6333
+  - name: grpc
+    port: 6334
+    targetPort: 6334
+  type: ClusterIP

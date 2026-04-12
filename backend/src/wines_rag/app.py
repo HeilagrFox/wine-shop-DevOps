@@ -15,6 +15,8 @@ from wines_rag.api.routes.chat import router as chat_router
 from wines_rag.api.routes.cart import router as cart_router
 from pathlib import Path
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator
+
 
 APP_DIR = Path(__file__).parent
 PROJECT_ROOT = APP_DIR.parent
@@ -53,6 +55,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+Instrumentator().instrument(app).expose(app)
 
 
 @app.exception_handler(WineNotFoundException)
