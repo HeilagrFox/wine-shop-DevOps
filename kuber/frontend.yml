@@ -17,7 +17,7 @@ spec:
       - name: frontend
         image: ghcr.io/heilagrfox/wine-shop-devops/wines-rag-frontend:latest
         ports:
-        - containerPort: 81
+        - containerPort: 80
         env:
         - name: BACKEND_HOST
           value: "http://backend:8000"
@@ -38,6 +38,6 @@ spec:
     app: frontend
   ports:
   - name: http
-    port: 81
-    targetPort: 81
+    port: 80
+    targetPort: 80
   type: LoadBalancer
