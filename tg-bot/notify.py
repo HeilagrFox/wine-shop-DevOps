@@ -8,21 +8,19 @@ import json
 
 
 def main():
-    # === Аргументы ===
     if len(sys.argv) < 6:
         print(
-            "❌ Usage: notify.py <status> <job> <pipeline_url> <branch> <commit>",
+            "❌ Usage: notify.py <status> <pipeline_name> <pipeline_url> <branch> <commit>",
             file=sys.stderr,
         )
         sys.exit(1)
 
     status = sys.argv[1]
-    job = sys.argv[2]
+    pipeline_name = sys.argv[2]
     pipeline_url = sys.argv[3]
     branch = sys.argv[4]
     commit = sys.argv[5]
 
-    # === Статус → текст ===
     status_map = {
         "success": "✅ SUCCESS",
         "failed": "❌ FAILED",
@@ -30,7 +28,6 @@ def main():
     }
     status_text = status_map.get(status.lower(), f"❓ UNKNOWN ({status})")
 
-    # === Переменные окружения ===
     tg_token = os.getenv("TG_BOT_TOKEN", "").strip()
     tg_chat_id = os.getenv("TG_CHAT_ID", "").strip()
 
@@ -41,7 +38,6 @@ def main():
         print("❌ Error: TG_CHAT_ID environment variable is not set", file=sys.stderr)
         sys.exit(1)
 
-    # === Валидация токена (базовая) ===
     if not tg_token.replace(":", "").replace("_", "").replace("-", "").isalnum():
         print(
             f"❌ Error: TG_BOT_TOKEN has invalid format (length: {len(tg_token)})",
@@ -49,17 +45,14 @@ def main():
         )
         sys.exit(1)
 
-    # === Формирование сообщения ===
     message = (
-        f"🔧 CI/CD Pipeline Update\n"
-        f"Job: {job}\n"
+        f"🔧 {pipeline_name}\n"
         f"Status: {status_text}\n"
         f"Branch: {branch}\n"
         f"Commit: {commit[:7]}\n"
         f"Link: {pipeline_url}"
     )
 
-    # === Отправка в Telegram ===
     api_url = f"https://api.telegram.org/bot{tg_token}/sendMessage"
 
     payload = urllib.parse.urlencode(
@@ -82,23 +75,23 @@ def main():
         with urllib.request.urlopen(request, timeout=30) as response:
             result = json.loads(response.read().decode("utf-8"))
             if result.get("ok"):
-                print(f"✅ Notification sent successfully to chat {tg_chat_id}")
+                print(f"Notification sent successfully to chat {tg_chat_id}")
                 sys.exit(0)
             else:
                 print(
-                    f"❌ Telegram API error: {result.get('description', 'Unknown error')}",
+                    f"Telegram API error: {result.get('description', 'Unknown error')}",
                     file=sys.stderr,
                 )
                 sys.exit(2)
     except urllib.error.HTTPError as e:
         error_body = e.read().decode("utf-8", errors="ignore")
-        print(f"❌ HTTP {e.code}: {error_body}", file=sys.stderr)
+        print(f"HTTP {e.code}: {error_body}", file=sys.stderr)
         sys.exit(3)
     except urllib.error.URLError as e:
-        print(f"❌ Network error: {e.reason}", file=sys.stderr)
+        print(f"Network error: {e.reason}", file=sys.stderr)
         sys.exit(4)
     except Exception as e:
-        print(f"❌ Unexpected error: {type(e).__name__}: {e}", file=sys.stderr)
+        print(f"Unexpected error: {type(e).__name__}: {e}", file=sys.stderr)
         sys.exit(99)
 
 

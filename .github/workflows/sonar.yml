@@ -173,7 +173,7 @@ jobs:
           echo "Запускаем Python-скрипт..."
           python3 notify.py \
             "$OVERALL_STATUS" \
-            "CI/CD Pipeline" \
+            "SonarQube" \
             "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
             "${{ github.ref_name }}" \
             "${{ github.sha }}"
