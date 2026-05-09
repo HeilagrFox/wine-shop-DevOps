@@ -5,7 +5,7 @@ prometheus:
     serviceMonitorSelectorNilUsesHelmValues: true  
     serviceMonitorSelector: {} 
     serviceMonitorNamespaceSelector: {} 
-    retention: 15d
+    retention: 1d
     storageSpec:
       volumeClaimTemplate:
         spec:
@@ -25,7 +25,6 @@ prometheus:
     serviceMonitorSelectorNilUsesHelmValues: false
     podMonitorNamespaceSelector: {}
     serviceMonitorNamespaceSelector: {}
-
 
 grafana:
   persistence:
