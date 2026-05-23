@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: ghcr.io/heilagrfox/wine-shop-devops/wines-rag-frontend:76b27273dfa83e088a27abf56fa7b94c5bf97fd6
+          image: ghcr.io/heilagrfox/wine-shop-devops/wines-rag-frontend:a4b55dc4cb954a4107152bc3046b6408dff1d6fd
           ports:
             - containerPort: 80
           env:
