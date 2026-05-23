@@ -134,7 +134,7 @@ jobs:
             -Dsonar.scm.disabled=false
             -Dsonar.verbose=true
 
-  send_telegram_notification:
+  send-telegram-notification:
     runs-on: ubuntu-latest
     needs: [test-backend, test-frontend, sonarqube-scan]
     if: always()
