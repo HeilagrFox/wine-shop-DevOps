@@ -14,42 +14,44 @@ spec:
         app: backend
       annotations:
         prometheus.io/scrape: "true"
-        prometheus.io/port: "8000"          
-        prometheus.io/path: "/metrics" 
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
     spec:
       containers:
-      - name: backend
-        image: ghcr.io/heilagrfox/wine-shop-devops/wines_rag_backend:latest
-        ports:
-        - containerPort: 8000
-        envFrom:
-        - secretRef:
-            name: app-secrets
-        env:
-        - name: HF_HOME
-          value: "/app/.cache/huggingface"
-        - name: FASTEMBED_CACHE_PATH
-          value: "/app/.cache/fastembed"
-        resources:
-          requests:
-            cpu: 500m
-            memory: 1028Mi
-      imagePullSecrets:       
-      - name: ghcr-secret
+        - name: backend
+          image: ghcr.io/heilagrfox/wine-shop-devops/wines_rag_backend:adc89cae586cbe8f73dc15e6e4545b118fe9a562
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - secretRef:
+                name: app-secrets
+          env:
+            - name: HF_HOME
+              value: "/app/.cache/huggingface"
+            - name: FASTEMBED_CACHE_PATH
+              value: "/app/.cache/fastembed"
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1028Mi
+      imagePullSecrets:
+        - name: ghcr-secret
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: backend
   namespace: wines-rag
-  labels:           
-    app: backend 
+  labels:
+    app: backend
 spec:
   selector:
     app: backend
   ports:
-  - name: http
-    port: 8000
-    targetPort: 8000
+    - name: http
+      port: 8000
+      targetPort: 8000
   type: ClusterIP
-
+  template:
+    spec:
+      containers: []

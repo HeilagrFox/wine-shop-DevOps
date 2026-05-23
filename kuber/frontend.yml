@@ -14,19 +14,19 @@ spec:
         app: frontend
     spec:
       containers:
-      - name: frontend
-        image: ghcr.io/heilagrfox/wine-shop-devops/wines-rag-frontend:latest
-        ports:
-        - containerPort: 80
-        env:
-        - name: BACKEND_HOST
-          value: "http://backend:8000"
-        resources:
-          requests:
-            cpu: 500m
-            memory: 512Mi
-      imagePullSecrets:       
-      - name: ghcr-secret
+        - name: frontend
+          image: ghcr.io/heilagrfox/wine-shop-devops/wines-rag-frontend:adc89cae586cbe8f73dc15e6e4545b118fe9a562
+          ports:
+            - containerPort: 80
+          env:
+            - name: BACKEND_HOST
+              value: "http://backend:8000"
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+      imagePullSecrets:
+        - name: ghcr-secret
 ---
 apiVersion: v1
 kind: Service
@@ -37,7 +37,10 @@ spec:
   selector:
     app: frontend
   ports:
-  - name: http
-    port: 80
-    targetPort: 80
+    - name: http
+      port: 80
+      targetPort: 80
   type: LoadBalancer
+  template:
+    spec:
+      containers: []
