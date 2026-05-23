@@ -269,7 +269,7 @@ jobs:
 
           JOBS_MD=$(echo "$JOBS_RAW" | jq -r '
             .jobs
-            | map(select(.name != "notify-telegram"))
+            | map(select(.name != "send_telegram_notification"))
             | map({
                 name: .name,
                 status: (.conclusion // "skipped"),
