@@ -139,41 +139,71 @@ jobs:
     needs: [test-backend, test-frontend, sonarqube-scan]
     if: always()
     continue-on-error: true  
-    defaults:
-      run:
-        working-directory: ./tg-bot
-    
+    permissions:
+      contents: read
+      actions: read
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Send Telegram Notification
+      - name: Generate dynamic job statuses
+        id: gen
         env:
-          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
-          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          echo " Проверка окружения..."
-          echo "  TG_BOT_TOKEN задан: ${TG_BOT_TOKEN:+YES}"
-          echo "  TG_CHAT_ID задан: ${TG_CHAT_ID:+YES}"
-          echo "  Текущая директория: $(pwd)"
-          echo "  Скрипт существует: $(test -f notify.py && echo YES || echo NO)"
-          
-          # Определяем общий статус пайплайна
-          OVERALL_STATUS="success"
-          if [[ "${{ needs.test-backend.result }}" == "failure" || 
-                "${{ needs.test-frontend.result }}" == "failure" || 
-                "${{ needs.sonarqube-scan.result }}" == "failure" ]]; then
-            OVERALL_STATUS="failed"
-          elif [[ "${{ needs.test-backend.result }}" == "cancelled" || 
-                  "${{ needs.test-frontend.result }}" == "cancelled" || 
-                  "${{ needs.sonarqube-scan.result }}" == "cancelled" ]]; then
-            OVERALL_STATUS="canceled"
-          fi
-          
-          echo "Запускаем Python-скрипт..."
-          python3 notify.py \
-            "$OVERALL_STATUS" \
-            "SonarQube" \
-            "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-            "${{ github.ref_name }}" \
-            "${{ github.sha }}"
+          JOBS_RAW=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs?per_page=100)
+
+          JOBS_MD=$(echo "$JOBS_RAW" | jq -r '
+            .jobs
+            | map(select(.name != "notify-telegram"))
+            | map({
+                name: .name,
+                status: (.conclusion // "skipped"),
+                emoji: (if .conclusion == "success" then "✅"
+                        elif .conclusion == "failure" then "❌"
+                        elif .conclusion == "cancelled" then "⚠️"
+                        else "⏭️" end)
+              })
+            | map("\(.emoji) \(.name): \(.status)")
+            | join("\n")
+          ')
+
+          OVERALL=$(echo "$JOBS_RAW" | jq -r '
+            [.jobs[].conclusion] | map(select(. != null)) |
+            if length == 0 then "pending"
+            elif any(. == "failure") then "failure"
+            elif all(. == "success") then "success"
+            else "cancelled"
+            end
+          ')
+
+          case "$OVERALL" in
+            success)   O_EMOJI="✅"; O_TEXT="Успешно" ;;
+            failure)   O_EMOJI="❌"; O_TEXT="С ошибками" ;;
+            cancelled) O_EMOJI="⚠️"; O_TEXT="Отменён" ;;
+            *)         O_EMOJI="⏳"; O_TEXT="В процессе" ;;
+          esac
+
+          echo "jobs_list<<EOF" >> $GITHUB_OUTPUT
+          echo "$JOBS_MD" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "overall_emoji=$O_EMOJI" >> $GITHUB_OUTPUT
+          echo "overall_text=$O_TEXT" >> $GITHUB_OUTPUT
+          echo "timestamp=$(date '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_OUTPUT
+
+      - name: Send Telegram notification
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TG_CHAT_ID }}
+          token: ${{ secrets.TG_BOT_TOKEN }}
+          format: markdown
+          disable_web_page_preview: true
+          message: |
+            ${{ steps.gen.outputs.overall_emoji }} *SonarQube: ${{ steps.gen.outputs.overall_text }}*
+
+            *Репозиторий:* ${{ github.repository }}
+            *Ветка:* ${{ github.ref_name }}
+            *Автор:* ${{ github.actor }}
+            *Запуск:* [Посмотреть логи](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            *Статусы джоб:*
+            ${{ steps.gen.outputs.jobs_list }}
+
+            *Завершён:* ${{ steps.gen.outputs.timestamp }}
