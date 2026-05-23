@@ -286,7 +286,7 @@ jobs:
 
   send-telegram-notification:
     runs-on: ubuntu-latest
-    needs: [argocd_version_image_change]
+    needs: [argocd-version-image-change]
     if: always()
     continue-on-error: true  
     permissions:
