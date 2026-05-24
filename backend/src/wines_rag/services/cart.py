@@ -42,5 +42,5 @@ class CartService:
 
     async def get_wines(self) -> CartGetResponse:
         points = await self.qdrant_service.get_available_wines()
-        wines = await qdrant_points_to_wines(points=points)
+        wines = qdrant_points_to_wines(points=points)
         return CartGetResponse(wines=wines)

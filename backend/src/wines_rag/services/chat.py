@@ -18,7 +18,7 @@ class ChatService:
     ) -> ChatSearchWinesResponse:
         cleaned_query = search_request.query.replace("вино", "")
         embed_query = await self.model.encode(text=cleaned_query)
-        filters = await make_qdrant_filters(
+        filters = make_qdrant_filters(
             price_max=search_request.price_max, price_min=search_request.price_min
         )
         points = await self.qdrant_service.query_search(
@@ -26,7 +26,7 @@ class ChatService:
                 query=cleaned_query, filters=filters, embed_query=embed_query
             )
         )
-        wines = await qdrant_scored_points_to_wines(points=points)
+        wines = qdrant_scored_points_to_wines(points=points)
         summary = await self.model.summarize_wines(
             query=search_request.query, wines=wines
         )
