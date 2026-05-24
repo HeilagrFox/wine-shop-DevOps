@@ -28,10 +28,10 @@ class QdrantService:
         await self.client.close()
 
     async def get_available_wines(self, limit: int = 1000) -> list[Record]:
-        filter = Filter(must=[FieldCondition(key="count", range=Range(gt=0))])
+        qfilter = Filter(must=[FieldCondition(key="count", range=Range(gt=0))])
         points, _ = await self.client.scroll(
             collection_name=self.collection_name,
-            scroll_filter=filter,
+            scroll_filter=qfilter,
             limit=limit,
             with_payload=True,
             with_vectors=False,

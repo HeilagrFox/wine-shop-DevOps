@@ -7,7 +7,7 @@ class WineNotFoundException(HTTPException):
             status_code=status.HTTP_404_NOT_FOUND,
             detail={
                 "errorCode": "NOT_FOUND",
-                "userMessage": f"Such wine doesn't exist",
+                "userMessage": "Such wine doesn't exist",
             },
         )
 

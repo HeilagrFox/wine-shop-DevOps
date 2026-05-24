@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { CartWine } from "../../../api/api.types";
+import type { CartWine, UUID } from "../../../api/api.types";
 import {
   getCartWines,
   updateCartWineCount,
@@ -16,9 +16,9 @@ export function useCart() {
     (updater: CartWine[] | ((prev: CartWine[]) => CartWine[])) => {
       setWines((prev) => {
         const next =
-          typeof updater === "function"
-            ? (updater as (p: CartWine[]) => CartWine[])(prev)
-            : updater;
+        typeof updater === "function"
+          ? updater(prev) 
+          : updater;
         winesRef.current = next;
         return next;
       });
@@ -41,7 +41,7 @@ export function useCart() {
   }, [load]);
 
   const increase = useCallback(
-    async (id: string) => {
+    async (id: UUID) => {
       const currentCount =
         winesRef.current.find((w) => w.id === id)?.count ?? 0;
       const nextCount = currentCount + 1;
@@ -72,7 +72,7 @@ export function useCart() {
   );
 
   const decrease = useCallback(
-    async (id: string) => {
+    async (id: UUID) => {
       const currentCount =
         winesRef.current.find((w) => w.id === id)?.count ?? 0;
       const next = Math.max(0, currentCount - 1);
@@ -107,7 +107,7 @@ export function useCart() {
   );
 
   const remove = useCallback(
-    async (id: string) => {
+    async (id: UUID) => {
       const previous = winesRef.current;
       setWinesAndRef((prev) => prev.filter((w) => w.id !== id));
       try {

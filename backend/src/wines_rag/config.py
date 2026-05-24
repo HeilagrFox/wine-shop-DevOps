@@ -15,8 +15,8 @@ class QdrantConfig(BaseModel):
 
 
 class PathSettings(BaseModel):
-    yaml_path: str = None
-    env_path: str = None
+    yaml_path: str | None = None
+    env_path: str | None = None
 
 
 class GenerativeConfig(BaseModel):

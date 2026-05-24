@@ -1,13 +1,13 @@
 import { memo, useCallback } from "react";
-import type { CartWine } from "../../../api/api.types";
+import type { CartWine, UUID } from "../../../api/api.types";
 import styles from "../../ChatPage/ChatPage.module.css";
 import { formatPrice } from "../../ChatPage/utils/formatPrice";
 
 type CartItemProps = {
   wine: CartWine;
-  onIncrease: (id: string) => void;
-  onDecrease: (id: string) => void;
-  onRemove: (id: string) => void;
+  onIncrease: (id: UUID) => void;
+  onDecrease: (id: UUID) => void;
+  onRemove: (id: UUID) => void;
 };
 
 const CartItem = ({

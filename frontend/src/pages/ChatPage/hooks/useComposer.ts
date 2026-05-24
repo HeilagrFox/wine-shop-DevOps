@@ -49,7 +49,7 @@ export function useComposer({
       () => setShakes((s) => ({ ...s, [field]: false })),
       600,
     );
-    timeoutsRef.current.push(id as unknown as number);
+    timeoutsRef.current.push(id);
   }, []);
 
   const handleSend = useCallback(() => {

@@ -74,4 +74,4 @@ class ModelService:
 
         except Exception as e:
             print(f"DeepSeek API Error: {e}")
-            return f"К сожалению, произошла ошибка. Попробуйте немного позже. "
+            return "К сожалению, произошла ошибка. Попробуйте немного позже. "

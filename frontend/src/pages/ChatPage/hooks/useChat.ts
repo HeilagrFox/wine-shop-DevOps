@@ -69,6 +69,7 @@ export function useChat(): UseChatReturn {
       };
       setMessages((m) => [...m, botMsg]);
     } catch (err) {
+      console.error("Ошибка запроса к AI:", err);
       const botMsg: ChatMessage = {
         id: String(Date.now() + 2),
         role: "bot",

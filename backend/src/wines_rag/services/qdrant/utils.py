@@ -5,7 +5,7 @@ from wines_rag.api.schemas.cart import Wine
 from wines_rag.entities.qdrant import WineBase
 
 
-async def make_qdrant_filters(
+def make_qdrant_filters(
     price_min: Optional[float] = None, price_max: Optional[float] = None
 ) -> Optional[Filter]:
 
@@ -19,7 +19,7 @@ async def make_qdrant_filters(
     return Filter(must=conditions)
 
 
-async def qdrant_scored_points_to_wines(points: list[ScoredPoint]) -> list[WineBase]:
+def qdrant_scored_points_to_wines(points: list[ScoredPoint]) -> list[WineBase]:
     chunks = []
     for point in points:
         payload = point.payload
@@ -31,7 +31,7 @@ async def qdrant_scored_points_to_wines(points: list[ScoredPoint]) -> list[WineB
     return chunks
 
 
-async def qdrant_points_to_wines(points: list[Record]) -> list[Wine]:
+def qdrant_points_to_wines(points: list[Record]) -> list[Wine]:
     chunks = []
     for point in points:
         payload = point.payload
