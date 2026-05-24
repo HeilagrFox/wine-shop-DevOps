@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: ghcr.io/heilagrfox/wine-shop-devops/wines_rag_backend:75278820043eaf0599da0f4e417d0c4fe91a809a
+          image: ghcr.io/heilagrfox/wine-shop-devops/wines_rag_backend:a579084b529b9abee2921856426fc3a4482a5a86
           ports:
             - containerPort: 8000
           envFrom:
