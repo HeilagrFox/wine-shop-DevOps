@@ -8,7 +8,7 @@ from wines_rag.entities.qdrant import WineBase
 from wines_rag.services.qdrant.utils import (
     make_qdrant_filters,
     qdrant_scored_points_to_wines,
-    qdrant_points_to_wines
+    qdrant_points_to_wines,
 )
 
 
@@ -21,7 +21,7 @@ def valid_wine_payload():
         "price": 99.99,
         "color": "red",
         "acidity": "medium",
-        "country": "France"
+        "country": "France",
     }
 
 
@@ -30,17 +30,17 @@ def create_scored_point():
     """Фабрика для создания ScoredPoint."""
 
     def _create(
-            point_id: UUID = None,
-            payload: dict = None,
-            score: float = 0.9,
-            version: int = 1
+        point_id: UUID = None,
+        payload: dict = None,
+        score: float = 0.9,
+        version: int = 1,
     ):
         return ScoredPoint(
             id=point_id if point_id else uuid4(),
             payload=payload if payload else {},
             score=score,
             vector=None,
-            version=version
+            version=version,
         )
 
     return _create
@@ -50,14 +50,11 @@ def create_scored_point():
 def create_record():
     """Фабрика для создания Record."""
 
-    def _create(
-            point_id: UUID = None,
-            payload: dict = None
-    ):
+    def _create(point_id: UUID = None, payload: dict = None):
         return Record(
             id=point_id if point_id else uuid4(),
             payload=payload if payload else {},
-            vector=None
+            vector=None,
         )
 
     return _create
@@ -69,14 +66,14 @@ class TestMakeQdrantFilters:
 
     async def test_no_filters(self):
         """Оба параметра None — возвращается Filter с пустым must."""
-        result = await make_qdrant_filters(price_min=None, price_max=None)
+        result = make_qdrant_filters(price_min=None, price_max=None)
 
         assert isinstance(result, Filter)
         assert result.must == []
 
     async def test_price_min_only(self):
         """Только price_min — один FieldCondition с gte."""
-        result = await make_qdrant_filters(price_min=100.0, price_max=None)
+        result = make_qdrant_filters(price_min=100.0, price_max=None)
 
         assert isinstance(result, Filter)
         assert len(result.must) == 1
@@ -88,7 +85,7 @@ class TestMakeQdrantFilters:
 
     async def test_price_max_only(self):
         """Только price_max — один FieldCondition с lte."""
-        result = await make_qdrant_filters(price_min=None, price_max=500.0)
+        result = make_qdrant_filters(price_min=None, price_max=500.0)
 
         assert isinstance(result, Filter)
         assert len(result.must) == 1
@@ -98,7 +95,7 @@ class TestMakeQdrantFilters:
 
     async def test_both_price_filters(self):
         """Оба параметра — два FieldCondition."""
-        result = await make_qdrant_filters(price_min=100.0, price_max=500.0)
+        result = make_qdrant_filters(price_min=100.0, price_max=500.0)
 
         assert isinstance(result, Filter)
         assert len(result.must) == 2
@@ -109,14 +106,14 @@ class TestMakeQdrantFilters:
 
     async def test_zero_price_min(self):
         """price_min=0 должен добавляться в фильтр."""
-        result = await make_qdrant_filters(price_min=0.0, price_max=None)
+        result = make_qdrant_filters(price_min=0.0, price_max=None)
 
         assert len(result.must) == 1
         assert result.must[0].range.gte == 0.0
 
     async def test_negative_price(self):
         """Отрицательные цены (валидация на уровне бизнес-логики)."""
-        result = await make_qdrant_filters(price_min=-10.0, price_max=-1.0)
+        result = make_qdrant_filters(price_min=-10.0, price_max=-1.0)
 
         assert len(result.must) == 2
         assert result.must[0].range.gte == -10.0
@@ -129,7 +126,7 @@ class TestQdrantScoredPointsToWines:
 
     async def test_empty_list(self):
         """Пустой список — возвращается пустой список."""
-        result = await qdrant_scored_points_to_wines(points=[])
+        result = qdrant_scored_points_to_wines(points=[])
 
         assert result == []
 
@@ -137,10 +134,12 @@ class TestQdrantScoredPointsToWines:
         """Валидные точки конвертируются в WineBase."""
         wine_id = uuid4()
         points = [
-            create_scored_point(point_id=wine_id, payload=valid_wine_payload, score=0.95)
+            create_scored_point(
+                point_id=wine_id, payload=valid_wine_payload, score=0.95
+            )
         ]
 
-        result = await qdrant_scored_points_to_wines(points=points)
+        result = qdrant_scored_points_to_wines(points=points)
 
         assert len(result) == 1
         assert isinstance(result[0], WineBase)
@@ -152,41 +151,46 @@ class TestQdrantScoredPointsToWines:
         """Точки с пустым payload пропускаются."""
         points = [
             create_scored_point(payload={}),
-            create_scored_point(
-                payload=valid_wine_payload,
-                point_id=uuid4()
-            ),
-            create_scored_point(payload=None)
+            create_scored_point(payload=valid_wine_payload, point_id=uuid4()),
+            create_scored_point(payload=None),
         ]
 
-        result = await qdrant_scored_points_to_wines(points=points)
+        result = qdrant_scored_points_to_wines(points=points)
 
         assert len(result) == 1
         assert result[0].name == "Test Wine"
 
-    async def test_count_field_filtered_out(self, create_scored_point, valid_wine_payload):
+    async def test_count_field_filtered_out(
+        self, create_scored_point, valid_wine_payload
+    ):
         """Поле 'count' удаляется из payload при конвертации."""
         payload_with_count = {**valid_wine_payload, "count": 5}
         points = [create_scored_point(payload=payload_with_count)]
 
-        result = await qdrant_scored_points_to_wines(points=points)
+        result = qdrant_scored_points_to_wines(points=points)
 
         assert len(result) == 1
-        assert not hasattr(result[0], 'count')
+        assert not hasattr(result[0], "count")
         assert result[0].price == valid_wine_payload["price"]
 
     async def test_multiple_points(self, create_scored_point):
         """Конвертация нескольких точек."""
         points = [
             create_scored_point(
-                payload={"name": f"Wine {i}", "description": "D", "price": i * 100,
-                         "color": "red", "acidity": "medium", "country": "FR"},
-                score=0.9 - i * 0.1
+                payload={
+                    "name": f"Wine {i}",
+                    "description": "D",
+                    "price": i * 100,
+                    "color": "red",
+                    "acidity": "medium",
+                    "country": "FR",
+                },
+                score=0.9 - i * 0.1,
             )
             for i in range(3)
         ]
 
-        result = await qdrant_scored_points_to_wines(points=points)
+        result = qdrant_scored_points_to_wines(points=points)
 
         assert len(result) == 3
         assert [w.name for w in result] == ["Wine 0", "Wine 1", "Wine 2"]
@@ -198,7 +202,7 @@ class TestQdrantScoredPointsToWines:
         points = [create_scored_point(payload=incomplete_payload)]
 
         with pytest.raises(Exception):
-            await qdrant_scored_points_to_wines(points=points)
+            qdrant_scored_points_to_wines(points=points)
 
 
 @pytest.mark.asyncio
@@ -207,7 +211,7 @@ class TestQdrantPointsToWines:
 
     async def test_empty_list(self):
         """Пустой список — возвращается пустой список."""
-        result = await qdrant_points_to_wines(points=[])
+        result = qdrant_points_to_wines(points=[])
 
         assert result == []
 
@@ -217,7 +221,7 @@ class TestQdrantPointsToWines:
         payload_with_count = {**valid_wine_payload, "count": 3}
         records = [create_record(point_id=wine_id, payload=payload_with_count)]
 
-        result = await qdrant_points_to_wines(points=records)
+        result = qdrant_points_to_wines(points=records)
 
         assert len(result) == 1
         assert isinstance(result[0], Wine)
@@ -231,14 +235,11 @@ class TestQdrantPointsToWines:
 
         records = [
             create_record(payload={}),
-            create_record(
-                payload=payload_with_count,
-                point_id=uuid4()
-            ),
-            create_record(payload=None)
+            create_record(payload=payload_with_count, point_id=uuid4()),
+            create_record(payload=None),
         ]
 
-        result = await qdrant_points_to_wines(points=records)
+        result = qdrant_points_to_wines(points=records)
 
         assert len(result) == 1
         assert result[0].name == "Test Wine"
@@ -249,7 +250,7 @@ class TestQdrantPointsToWines:
         payload_with_count = {**valid_wine_payload, "count": 10}
         records = [create_record(payload=payload_with_count)]
 
-        result = await qdrant_points_to_wines(points=records)
+        result = qdrant_points_to_wines(points=records)
 
         assert len(result) == 1
         assert result[0].count == 10
@@ -258,13 +259,20 @@ class TestQdrantPointsToWines:
         """Конвертация нескольких записей."""
         records = [
             create_record(
-                payload={"name": f"Wine {i}", "description": "D", "price": i * 100,
-                         "color": "red", "acidity": "medium", "country": "FR", "count": i + 1}
+                payload={
+                    "name": f"Wine {i}",
+                    "description": "D",
+                    "price": i * 100,
+                    "color": "red",
+                    "acidity": "medium",
+                    "country": "FR",
+                    "count": i + 1,
+                }
             )
             for i in range(3)
         ]
 
-        result = await qdrant_points_to_wines(points=records)
+        result = qdrant_points_to_wines(points=records)
 
         assert len(result) == 3
         assert [w.name for w in result] == ["Wine 0", "Wine 1", "Wine 2"]
@@ -276,4 +284,4 @@ class TestQdrantPointsToWines:
         records = [create_record(payload=incomplete_payload)]
 
         with pytest.raises(Exception):
-            await qdrant_points_to_wines(points=records)
+            qdrant_points_to_wines(points=records)
